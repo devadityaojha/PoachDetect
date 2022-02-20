@@ -23,23 +23,18 @@ class AudioData(Dataset):
         return 1
 
     def transform(self, idx, filepath):
-        if idx in self.cache:
-            return self.cache[idx]
-        if self.landmarks_frame.iloc[idx, 4]:
-            samplerate, data = wavfile.read(self.root_dir + "gunshots/" + filepath)
-        else:
-            samplerate, data = wavfile.read(self.root_dir + "not_gunshots/" + filepath)
+
+        samplerate, data = wavfile.read(filepath)
         data = data[:50000]
         frequencies, times, spectogram = signal.spectrogram(data, samplerate, nfft=1000, mode='angle')
 
-        self.cache[idx] = frequencies[:100]
         return frequencies[:100]
 
     def __getitem__(self, idx):
         if torch.is_tensor(idx):
             idx = idx.tolist()
 
-        filepath = self.landmarks_frame.iloc[idx, 3]
+        filepath = self.file_name
 
         return {"sample": self.transform(idx, filepath)}
 
@@ -77,8 +72,11 @@ class Model(nn.Module):
 
 
 def infer(model, audio_data):
-    with torch.no_grad:
-        a, b = audio_data.size()
-        predictions = model(audio_data["sample"].float().view(a, b, 1))
+    model.eval()
+    a, b = 1, 100
+    audio_data = torch.Tensor(audio_data).view(1, 100, 1)
+    print(audio_data.size())
+    predictions = model(audio_data.float().view(1, 100, 1))
+    print(predictions)
 
-        return predictions >= 0.5
+    return predictions >= 0.5

@@ -10,6 +10,9 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
+
+let ifDetected = false
+
 export const Home: FC = () => {
   const [message, setMessage] = useState('');
   const [error, setError] = useState<string>('');
@@ -18,7 +21,12 @@ export const Home: FC = () => {
   const queryBackend = async () => {
     try {
       const message = await getMessage();
-      setMessage(message['Location'] + '֍' + message['Payload']);
+      if (message['Payload'] == 'Detected') {
+        ifDetected = true;
+        setMessage(message['Location'] + '֍' + message['Payload'] + '֍' + message['Coordinates']);
+      } else {
+        setMessage(message['Location'] + '֍' + message['Payload']);
+      }
     } catch (err) {
       setError(String(err));
     }
@@ -33,9 +41,16 @@ export const Home: FC = () => {
           Poacher Search
         </a>
       )}
-      {message && (
+      {message && ifDetected && (
         // <p>
         <div className={"resultBox"}>
+          {message.split("֍").map(msg => (<>{msg}<br/><br/></>))}
+        {/* // </p> */}
+        </div>
+      )}
+      {message && !ifDetected && (
+        // <p>
+        <div className={"resultBoxFalse"}>
           {message.split("֍").map(msg => (<>{msg}<br/><br/></>))}
         {/* // </p> */}
         </div>

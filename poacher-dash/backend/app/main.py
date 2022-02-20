@@ -10,7 +10,11 @@ from app.core.auth import get_current_active_user
 from app.core.celery_app import celery_app
 from app import tasks
 from mage_classifier import post_request
-# from classifier import classify_audio
+from classifier import classify_audio
+
+NORMALIZATION_FACTOR = 0.0001
+MAGE_WEIGHT = 0.05
+AUDIO_WEIGHT = 0.95
 
 app = FastAPI(
     title=config.PROJECT_NAME, docs_url="/api/docs", openapi_url="/api"
@@ -38,13 +42,16 @@ async def example_task():
 
 @app.get("/api/v1/task/poacher_search")
 async def poacher_search():
-    listening = True
-    value = post_request()
-    val = 0.000001 * value
+    success_probability = post_request()[0]
+    location = post_request()[1][0]
+    coordinates = post_request()[1][1]
+    audio_classification = classify_audio()
+    val = NORMALIZATION_FACTOR * MAGE_WEIGHT * success_probability + AUDIO_WEIGHT * audio_classification
+
     return {"message": {
-        "Payload": "Detected",
-        "Location": "Sahara Desert", 
-        "Probability": str(val)}
+        "Payload": "Detected" if val >= 0.5 else "Not Detected",
+        "Location": location,
+        "Coordinates": coordinates
     }
 
 
