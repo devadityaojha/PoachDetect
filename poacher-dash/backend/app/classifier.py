@@ -1,6 +1,9 @@
 import sounddevice as sd
 from scipy.io.wavfile import write
 import wavio as WV
+from model.utils import AudioData, infer
+from model.config import classifier
+from torch.utils.data import DataLoader
 
 sd.default.device = 0
 # Sampling frequency
@@ -11,7 +14,8 @@ duration = 4
 
 def classify_audio():
     retrieved_audio = retrieve_audio()
-    return 0
+    audio_data = AudioData(retrieved_audio)[0]["sample"]
+    return infer(classifier, audio_data)
 
 def retrieve_audio():
     recording = sd.rec(int(duration * freq), samplerate=freq, channels=1)
